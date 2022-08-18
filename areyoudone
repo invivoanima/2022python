@@ -1,0 +1,207 @@
+#csv 파일 복사하기
+!git clone https://github.com/invivoanima/2022python/
+
+#한글폰트 설치하기
+!apt-get install fonts-nanum -qq > /dev/null
+!fc-cache -fv
+import matplotlib as mpl 
+mpl.font_manager._rebuild()
+findfont = mpl.font_manager.fontManager.findfont
+mpl.font_manager.findfont = findfont
+mpl.backends.backend_agg.findfont = findfont
+
+from IPython.display import clear_output
+import csv
+import matplotlib.pyplot as plt
+import time
+
+
+# 관리자 아이디
+admin_id = 'admin'
+admin_pw = '1q2w3e4r'
+admin_login = False
+
+
+# 학생 명단 불러오기
+classlist = []
+name = csv.reader(open('/content/2022python/data/name.csv'))
+next(name)
+for row in name :
+  classlist.append(row[0])
+
+
+# 할 일 명단 불러오기
+todolist = []
+todo = csv.reader(open('/content/2022python/data/todolist.csv'))
+next(todo)
+for row in todo :
+  todolist.append(row[0])
+
+
+# 할 일 명단 갯수만큼 체크리스트 만들기(리스트 안에 리스트)
+checklist = []
+for i in range(len(todolist)) :
+  checklist.append([])
+
+
+# 안한 사람 리스트
+nogood = []
+
+
+# 그래프 변환을 위한 인원 카운트
+goodcount = []
+
+
+while True:
+  clear_output()
+  print('┏━━━━━━━━━━━━━━━━━━━━━┓')
+  print('┃        오늘 할 일은 다 했나요?           ┃')
+  print('┃  1) 학생 로그인                          ┃')
+  print('┃  2) 선생님 로그인                        ┃')
+  print('┗━━━━━━━━━━━━━━━━━━━━━┛')
+  time.sleep(0.5)
+  input_text = input('원하는 메뉴의 숫자를 적어주세요. :')
+  if input_text == '2' :
+    input_id = input('아이디를 입력해주세요. :')
+    input_pw = input('비밀번호를 입력해주세요. :')
+    if input_id == admin_id and input_pw == admin_pw : 
+      admin_login = True
+      while admin_login is True : 
+        clear_output()
+        print('┏━━━━━━━━━━━━━━━━━━━━━┓')
+        print('┃        오늘 할 일은 다 했나요?           ┃')
+        print('┃  선생님, 무엇을 하실건가요?              ┃')
+        print('┃  1) 등록된 학생 조회하기                 ┃')
+        print('┃  2) 아직 안한 사람 찾기                  ┃')
+        print('┃  3) 종목별 참여율 조회                   ┃')
+        print('┃  4) 로그아웃                             ┃')
+        print('┗━━━━━━━━━━━━━━━━━━━━━┛')
+        time.sleep(0.5)
+        input_text = input('원하는 메뉴의 숫자를 적어주세요. :')
+        if input_text == '1' :
+          print('등록된 학생은 총 ' + str(len(classlist)) + '명 입니다.')
+          print('학생의 명단은 다음과 같습니다.')
+          print(*classlist, sep = ' ')
+          input('계속하려면 엔터를 눌러주세요.')
+
+        if input_text == '2' :
+          print('아직 참여하지 않은 학생을 조회합니다.')
+          for i in range(len(todolist)) :
+            for j in range(len(classlist)) :
+              if classlist[j] not in checklist[i] : 
+                nogood.append(classlist[j])
+            print(todolist[i] + '를 하지 않은 학생은 다음과 같습니다.')
+            print(*nogood, sep = ' ')
+            nogood = []
+            print('')
+          input('계속하려면 엔터를 눌러주세요.')
+
+        if input_text == '3' :
+          print('오늘의 참여율을 막대그래프로 나타냅니다.')
+          for i in range(len(todolist)) :
+            goodcount.append(len(checklist[i]))
+          plt.rcParams['axes.unicode_minus'] = False 
+          plt.rc('font', family = 'NanumGothic')
+          plt.title('오늘의 할 일 현황')
+          plt.bar(todolist, goodcount)
+          plt.show()
+          input('계속하려면 엔터를 눌러주세요.')
+        if input_text == '4' :
+          admin_login = False
+
+    else :
+      print('아이디 또는 비밀번호가 맞지 않습니다.')
+
+  if input_text == '1' :
+    input_id = input('이름을 입력해주세요. :')
+    if input_id in classlist : 
+      student_login = True
+      while student_login == True : 
+        clear_output()
+        login_student = classlist.index(input_id)
+        print('┏━━━━━━━━━━━━━━━━━━━━━┓')
+        print('┃  안녕하세요! ' + input_id + '님. 할 일은 다 했나요?┃')
+        print('┃  무엇을 하실건가요?                      ┃')
+        print('┃  1) 한꺼번에 추가하기                    ┃')
+        print('┃  2) 안한 일 찾기                         ┃')
+        print('┃  3) 개별로 추가하기                      ┃')
+        print('┃  4) 개별 삭제하기(실수로 추가한 것)      ┃')
+        print('┃  5) 로그아웃                             ┃')
+        print('┗━━━━━━━━━━━━━━━━━━━━━┛')
+        time.sleep(0.5)
+        input_text = input('원하는 메뉴의 숫자를 적어주세요. :')
+        if input_text == '1' :
+          print('오늘 한 일을 한꺼번에 확인합니다.')
+          for i in range(len(todolist)) :
+            while True : 
+              input_todo = input(str(todolist[i]) + '은 했나요? (Y/N) : ')
+              if input_todo == 'Y' or input_todo == 'y' :
+                if input_id not in checklist[i] : 
+                  checklist[i].append(input_id)
+                break
+              elif input_todo == 'N' or input_todo == 'n' :
+                if input_id in checklist[i] :
+                  checklist[i].remove(input_id)
+                break
+              else :
+                print('y 또는 n으로 다시 입력해주세요.')
+
+        if input_text == '2' : 
+          print('아직 하지 않은 일을 찾습니다.')
+          nottodolist = ''
+          for i in range(len(todolist)) :
+            if str(input_id) not in checklist[i] :
+              nottodolist = nottodolist + ' ' + todolist[i]
+          print('아직 하지 않은 일은' + nottodolist + '입니다.')
+          input('계속하려면 엔터를 눌러주세요.')
+        
+        if input_text == '3' : 
+          while True :
+            clear_output()
+            print('┏━━━━━━━━━━━━━━━━━━━━━┓')
+            print('┃  어떤 일을 추가할 건가요?                ┃')
+            for i in range(len(todolist)) :
+              print('┃  ' + str(i + 1) + ') ' + todolist[i] + '                          ┃')
+            print('┃  ' + str(i + 2) + ') 뒤로가기                             ┃')
+            print('┗━━━━━━━━━━━━━━━━━━━━━┛')
+            time.sleep(0.5)
+            input_text = input('원하는 메뉴의 숫자를 적어주세요. :')
+            if int(input_text) == (len(todolist) + 1) :
+              break
+            else :
+              print('선택한 일은 ' + todolist[int(input_text) - 1] + ' 입니다.')
+              while True :
+                input_todo = input(str(todolist[int(input_text) - 1]) + '은 했나요? (Y/N) : ')
+                if input_todo == 'Y' or input_todo == 'y' :
+                  if input_id not in checklist[int(input_text) - 1] :
+                    checklist[int(input_text) - 1].append(input_id)
+                  break
+                elif input_todo == 'N' or input_todo == 'n' :
+                  if input_id in checklist[int(input_text) - 1] : 
+                    checklist[int(input_text) - 1].remove(input_id)
+                  break
+                else :
+                  print('y 또는 n으로 다시 입력해주세요.')
+        
+
+        if input_text == '4' :
+          while True :
+            clear_output()
+            print('┏━━━━━━━━━━━━━━━━━━━━━┓')
+            print('┃  어떤 일을 삭제할 건가요?                ┃')
+            for i in range(len(todolist)) :
+              print('┃  ' + str(i + 1) + ') ' + todolist[i] + '                          ┃')
+            print('┃  ' + str(i + 2) + ') 뒤로가기                             ┃')
+            print('┗━━━━━━━━━━━━━━━━━━━━━┛')
+            time.sleep(0.5)
+            input_text = input('삭제할 일의 숫자를 적어주세요. :')
+            if int(input_text) == (len(todolist) + 1) :
+              break
+            else :
+              if input_id in checklist[int(input_text) -1] :
+                checklist[int(input_text) - 1].remove(input_id)
+              print(todolist[int(input_text) - 1] + '의 결과를 삭제합니다.')
+              input('계속하려면 엔터를 눌러주세요.')
+
+        if input_text == '5' :
+          student_login = False
